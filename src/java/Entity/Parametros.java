@@ -68,23 +68,6 @@ public class Parametros {
         this.idMetodo = idMetodo;
     }
     
-    public String typeInput()
-    {
-         String ret = "";
-        
-        if ( tipo == STRING || tipo == BOOLEAN )
-        {
-            ret = "text";
-        }
-        
-        else if ( tipo == INT || tipo == FLOAT || tipo == BYTE )
-        {
-            ret = "number";
-        }
-        
-        return ret ;
-    }
-    
     @Override
     public String toString() {
         
@@ -116,5 +99,22 @@ public class Parametros {
         }
         
         return ret + " " + nomeParametro;
+    }
+    
+    public String typeInput()
+    {
+         String ret = "";
+        
+        if ( tipo == STRING || tipo == BOOLEAN )
+        {
+            ret = "text";
+        }
+        
+        else if ( tipo == INT || tipo == FLOAT || tipo == BYTE )
+        {
+            ret = "number";
+        }
+        
+        return ret ;
     }
 }
