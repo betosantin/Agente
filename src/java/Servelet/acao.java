@@ -124,9 +124,9 @@ public class acao extends HttpServlet {
         {
             obterpressao();
         }
-        else if ( request.getParameter("obterhumidade") != null )
+        else if ( request.getParameter("obterumidade") != null )
         {
-            obterhumidade();
+            obterumidade();
         }
         else if ( request.getParameter("obterldr") != null )
         {
@@ -224,7 +224,7 @@ public class acao extends HttpServlet {
         }
     }
     
-    private void obterhumidade()
+    private void obterumidade()
     {
         try {
             bme280 sensor = new bme280();
