@@ -18,6 +18,10 @@ import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.io.w1.W1Master;
 import com.pi4j.temperature.TemperatureScale;
 import java.awt.Color;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
@@ -25,6 +29,8 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
@@ -286,6 +292,31 @@ public class acao extends HttpServlet {
     public String getServletInfo() {
         resposta.setContentType("application/json");
         
+        try {
+            createProp();
+            
+            Properties props = getProp();
+            
+            String httpType = requisicao.getParameter("httptype");
+            String ip = requisicao.getParameter("ip");
+            String porta = requisicao.getParameter("porta");
+            String servelet = requisicao.getParameter("servelet");
+            String retorno = requisicao.getParameter("retorno");
+            String pass = requisicao.getParameter("pass");
+            
+            props.setProperty("httptype", httpType);
+            props.setProperty("ip", ip);
+            props.setProperty("porta", porta);
+            props.setProperty("servelet", servelet);
+            props.setProperty("retorno", retorno);
+            props.setProperty("pass", pass);
+            
+            saveProp(props);
+            
+        } catch (IOException ex) {
+            Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         Parametros p1 = new Parametros( "red", Parametros.INT );
         Parametros p2 = new Parametros( "green", Parametros.INT );
         Parametros p3 = new Parametros( "blue", Parametros.INT );
@@ -319,7 +350,6 @@ public class acao extends HttpServlet {
         
         try {
             resposta.getWriter().write(g.toJson(metodos));
-//            resposta.getWriter().write(g.toJson(luzOn));
             
         } catch (IOException ex) {
             Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
@@ -328,14 +358,39 @@ public class acao extends HttpServlet {
         
         return "";
     }
+    
+    private void createProp() throws FileNotFoundException, IOException
+    {
+        Properties props = new Properties();
+ 
+        props.setProperty("httptype", "");
+        props.setProperty("ip", "");
+        props.setProperty("porta", "");
+        props.setProperty("servelet", "");
+        props.setProperty("retorno", "");
+        props.setProperty("pass", "" );
 
-//    private void encaminharPagina(String pagina) {
-//        try {
-//            RequestDispatcher rd = requisicao.getRequestDispatcher(pagina);
-//            rd.forward(requisicao, resposta);
-//        } catch (Exception e) {
-//            System.out.println("erro ao encaminhar página");
-//        }
-//    }
-
+        saveProp(props);
+    }
+    
+    private void saveProp(Properties props) throws FileNotFoundException, IOException
+    {
+        File f = new File(System.getProperty("user.dir") + "/dados.properties");
+      
+        FileOutputStream fos = new FileOutputStream(f);
+        props.store(fos, "");
+        fos.close();
+    }
+    
+    private Properties getProp() throws IOException {
+        Properties props = new Properties();
+        File f = new File(System.getProperty("user.dir") + "/dados.properties");
+      
+        if (f.exists()) {
+            FileInputStream file = new FileInputStream(f);
+            props.load(file);
+        }
+        
+        return props;
+    } 
 }
