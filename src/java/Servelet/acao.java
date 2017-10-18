@@ -335,7 +335,7 @@ public class acao extends HttpServlet {
         
         Metodos obtTemp = new Metodos( "obtertemperatura", Parametros.FLOAT, null );
         Metodos obtPress = new Metodos( "obterpressao", Parametros.FLOAT, null );
-        Metodos obtHumi = new Metodos( "obterhumidade", Parametros.FLOAT, null );
+        Metodos obtHumi = new Metodos( "obterumidade", Parametros.FLOAT, null );
         Metodos obtLuminosidade = new Metodos( "obterldr", Parametros.INT, null );
         
         List<Metodos> metodos = new ArrayList<>();
@@ -393,4 +393,28 @@ public class acao extends HttpServlet {
         
         return props;
     } 
+    
+    public String getUrlCentralizadora()
+    {
+
+        String ret = "";
+        
+        try {
+            Properties props = getProp();
+
+            if (props != null) {
+                String schema = props.getProperty("httptype", "");
+                String ip = props.getProperty("ip", "");
+                String port = props.getProperty("porta", "");
+                String servelet = props.getProperty("servelet", "");
+                String retorno = props.getProperty("retorno", "");
+                String pass = props.getProperty("pass", "");
+
+                ret = schema + "://" + ip + ":" + port + "/" + servelet + "/" + retorno + "?pass=" + pass;
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return ret;
+    }
 }
