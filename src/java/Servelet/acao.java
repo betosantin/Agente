@@ -236,7 +236,7 @@ public class acao extends HttpServlet {
                     res.setDispositivo("");
                     res.setNomeEvento("obtertemperatura");
                     res.setUsuario("Agente");
-                    res.setValue(device.getTemperature(TemperatureScale.CELSIUS) + "ºc");
+                    res.setValue(device.getTemperature(TemperatureScale.CELSIUS) + " ºc");
 
                     sendValuesToUrl(res);
             }
@@ -278,7 +278,7 @@ public class acao extends HttpServlet {
             res.setDispositivo("");
             res.setNomeEvento("obterumidade");
             res.setUsuario("Agente");
-            res.setValue(NF.format(hum));
+            res.setValue(NF.format(hum) + " %25");
             
             sendValuesToUrl(res);
 
