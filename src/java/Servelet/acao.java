@@ -7,6 +7,7 @@ package Servelet;
 
 import Entity.Parametros;
 import Entity.Metodos;
+import Entity.Resultado;
 import com.google.gson.Gson;
 import com.pi4j.component.temperature.TemperatureSensor;
 import com.pi4j.io.gpio.GpioController;
@@ -18,18 +19,23 @@ import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.io.w1.W1Master;
 import com.pi4j.temperature.TemperatureScale;
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.sql.Date;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -186,10 +192,18 @@ public class acao extends HttpServlet {
             blink = Boolean.valueOf(requisicao.getParameter("blink"));
         }
         
+        Resultado res = new Resultado();
+        res.setData(Calendar.getInstance().getTimeInMillis());
+        res.setDirecao(Resultado.DIRECTION_RECEIVE);
+        res.setDispositivo("");
+        res.setNomeEvento("acenderled");
+        res.setUsuario("Agente");
+        res.setValue("Cor: R:" + red + " G:" + green + " B:" + blue + " Piscar:" + blink + " Tempo(s):" + time );
+
+        sendValuesToUrl(res);
+        
         ledThread = new LedSwitch(new Color(red, green, blue), time, blink);
         ledThread.run();
-        
-        System.out.println("continuando...");
     }
     
     private void apagarLed() {
@@ -197,6 +211,16 @@ public class acao extends HttpServlet {
         if ( ledThread != null )
         {
             ledThread.stop();
+            
+            Resultado res = new Resultado();
+            res.setData(Calendar.getInstance().getTimeInMillis());
+            res.setDirecao(Resultado.DIRECTION_RECEIVE);
+            res.setDispositivo("");
+            res.setNomeEvento("apagarled");
+            res.setUsuario("Agente");
+            res.setValue("Desligado");
+            
+            sendValuesToUrl(res);
         }
     }
     
@@ -206,11 +230,15 @@ public class acao extends HttpServlet {
 
         for (TemperatureSensor device : w1Master.getDevices(TemperatureSensor.class)) {
             if (device.getName().contains("28-0316a32b78ff")) {
-                try {
-                    resposta.getWriter().write(device.getTemperature(TemperatureScale.CELSIUS) + " ºc");
-                } catch (IOException ex) {
-                    Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                    Resultado res = new Resultado();
+                    res.setData(Calendar.getInstance().getTimeInMillis());
+                    res.setDirecao(Resultado.DIRECTION_RECEIVE);
+                    res.setDispositivo("");
+                    res.setNomeEvento("obtertemperatura");
+                    res.setUsuario("Agente");
+                    res.setValue(device.getTemperature(TemperatureScale.CELSIUS) + "ºc");
+
+                    sendValuesToUrl(res);
             }
         }
     }
@@ -223,8 +251,15 @@ public class acao extends HttpServlet {
             sensor.readTemperature();
             float press = sensor.readPressure();
             
-            resposta.getWriter().write( NF.format( press / 100 ) + " hPa");
+            Resultado res = new Resultado();
+            res.setData(Calendar.getInstance().getTimeInMillis());
+            res.setDirecao(Resultado.DIRECTION_RECEIVE);
+            res.setDispositivo("");
+            res.setNomeEvento("obterpressao");
+            res.setUsuario("Agente");
+            res.setValue(NF.format( press / 100 ) + " hPa");
 
+            sendValuesToUrl(res);
         } catch (Exception ex) {
             Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -237,7 +272,15 @@ public class acao extends HttpServlet {
             
             float hum = sensor.readHumidity();
             
-            resposta.getWriter().write( NF.format(hum) + " %");
+            Resultado res = new Resultado();
+            res.setData(Calendar.getInstance().getTimeInMillis());
+            res.setDirecao(Resultado.DIRECTION_RECEIVE);
+            res.setDispositivo("");
+            res.setNomeEvento("obterumidade");
+            res.setUsuario("Agente");
+            res.setValue(NF.format(hum));
+            
+            sendValuesToUrl(res);
 
         } catch (Exception ex) {
             Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
@@ -266,7 +309,15 @@ public class acao extends HttpServlet {
             gpio.shutdown();
             gpio.unprovisionPin(pinOut);
 
-            resposta.getWriter().write(count + " lumens?????");
+            Resultado res = new Resultado();
+            res.setData(Calendar.getInstance().getTimeInMillis());
+            res.setDirecao(Resultado.DIRECTION_RECEIVE);
+            res.setDispositivo("");
+            res.setNomeEvento("obterldr");
+            res.setUsuario("Agente");
+            res.setValue(count + "");
+            
+            sendValuesToUrl(res);
         } catch (Exception ex) {
 
         }
@@ -416,5 +467,40 @@ public class acao extends HttpServlet {
             ex.printStackTrace();
         }
         return ret;
+    }
+    
+    private void sendValuesToUrl(Resultado res)
+    {
+        try {
+            URL url = new URL(getUrlCentralizadora());
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setReadTimeout(10000);
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+//            conn.setRequestProperty("Content-Type","application/json"); 
+            OutputStreamWriter out = new OutputStreamWriter(
+                    conn.getOutputStream(), "UTF-8");
+            out.write("resultado=" + new Gson().toJson(res));
+            out.flush();
+            out.close();
+            
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(
+                            conn.getInputStream()));
+            String decodedString;
+            while ((decodedString = in.readLine()) != null) {
+                System.out.println(decodedString);
+            }
+            in.close();
+            conn.disconnect(); 
+            
+        } catch (IOException ex) {
+            System.out.println("TIME OUT......");
+            ex.printStackTrace();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -15,15 +15,15 @@ public class Resultado {
     
     private int idhistorico;
     private String dispositivo;
-    private String usuário;
+    private String usuario;
     private String nomeEvento;
-    private Date data;
+    private long data;
     private int direcao;
     private String value;
 
-    public Resultado(String dispositivo, String usuário, String nomeEvento, Date data, int direcao, String value) {
+    public Resultado(String dispositivo, String usuario, String nomeEvento, long data, int direcao, String value) {
         this.dispositivo = dispositivo;
-        this.usuário = usuário;
+        this.usuario = usuario;
         this.nomeEvento = nomeEvento;
         this.data = data;
         this.direcao = direcao;
@@ -50,12 +50,12 @@ public class Resultado {
         this.dispositivo = dispositivo;
     }
 
-    public String getUsuário() {
-        return usuário;
+    public String getUsuario() {
+        return usuario;
     }
 
-    public void setUsuário(String usuário) {
-        this.usuário = usuário;
+    public void setUsuario(String usuario) {
+        this.usuario = usuario;
     }
 
     public String getNomeEvento() {
@@ -66,11 +66,11 @@ public class Resultado {
         this.nomeEvento = nomeEvento;
     }
 
-    public Date getData() {
+    public long getData() {
         return data;
     }
 
-    public void setData(Date data) {
+    public void setData(long data) {
         this.data = data;
     }
 
@@ -94,7 +94,7 @@ public class Resultado {
     {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         
-        return sdf.format(this.getData());
+        return sdf.format(new Date(this.getData()));
     }
 
     public String getDirectionToString()
