@@ -355,14 +355,22 @@ public class acao extends HttpServlet {
             String retorno = requisicao.getParameter("retorno");
             String pass = requisicao.getParameter("pass");
             
-            props.setProperty("httptype", httpType);
-            props.setProperty("ip", ip);
-            props.setProperty("porta", porta);
-            props.setProperty("servelet", servelet);
-            props.setProperty("retorno", retorno);
-            props.setProperty("pass", pass);
-            
-            saveProp(props);
+            if (httpType != null && ip != null && porta != null
+                    && servelet != null && retorno != null && pass != null) {
+
+                props.setProperty("httptype", httpType);
+                props.setProperty("ip", ip);
+                props.setProperty("porta", porta);
+                props.setProperty("servelet", servelet);
+                props.setProperty("retorno", retorno);
+                props.setProperty("pass", pass);
+
+                saveProp(props);
+            }
+            else
+            {
+                resposta.sendError(HttpURLConnection.HTTP_BAD_REQUEST);
+            }
             
         } catch (IOException ex) {
             Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
