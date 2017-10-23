@@ -16,6 +16,7 @@ import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import com.pi4j.io.gpio.PinMode;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.RaspiPin;
+import com.pi4j.io.i2c.I2CFactory;
 import com.pi4j.io.w1.W1Master;
 import com.pi4j.temperature.TemperatureScale;
 import java.awt.Color;
@@ -228,17 +229,40 @@ public class acao extends HttpServlet {
     {
         W1Master w1Master = new W1Master();
 
-        for (TemperatureSensor device : w1Master.getDevices(TemperatureSensor.class)) {
-            if (device.getName().contains("28-0316a32b78ff")) {
-                    Resultado res = new Resultado();
-                    res.setData(Calendar.getInstance().getTimeInMillis());
-                    res.setDirecao(Resultado.DIRECTION_RECEIVE);
-                    res.setDispositivo("");
-                    res.setNomeEvento("obtertemperatura");
-                    res.setUsuario("Agente");
-                    res.setValue(device.getTemperature(TemperatureScale.CELSIUS) + " ºc");
+        if ( !w1Master.getDevices(TemperatureSensor.class).isEmpty() )
+        {
+            for (TemperatureSensor device : w1Master.getDevices(TemperatureSensor.class)) {
+                if (device.getName().contains("28-0316a32b78ff")) {
+                        Resultado res = new Resultado();
+                        res.setData(Calendar.getInstance().getTimeInMillis());
+                        res.setDirecao(Resultado.DIRECTION_RECEIVE);
+                        res.setDispositivo("");
+                        res.setNomeEvento("obtertemperatura");
+                        res.setUsuario("Agente");
+                        res.setValue(device.getTemperature(TemperatureScale.CELSIUS) + " ºc");
 
-                    sendValuesToUrl(res);
+                        sendValuesToUrl(res);
+                }
+            }
+        }
+        
+        else
+        {
+            try {
+                final NumberFormat nf = new DecimalFormat("##00.00");
+                bme280 sensor = new bme280();
+
+                Resultado res = new Resultado();
+                res.setData(Calendar.getInstance().getTimeInMillis());
+                res.setDirecao(Resultado.DIRECTION_RECEIVE);
+                res.setDispositivo("");
+                res.setNomeEvento("obtertemperatura");
+                res.setUsuario("Agente");
+                res.setValue(nf.format(sensor.readTemperature()) + " ºc");
+
+                sendValuesToUrl(res);
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
     }
