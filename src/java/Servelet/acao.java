@@ -242,6 +242,8 @@ public class acao extends HttpServlet {
                         res.setValue(device.getTemperature(TemperatureScale.CELSIUS) + " ºc");
 
                         sendValuesToUrl(res);
+                        
+                        System.out.println("obtertemperatura: " + device.getTemperature(TemperatureScale.CELSIUS) + " ºc");
                 }
             }
         }
@@ -261,6 +263,8 @@ public class acao extends HttpServlet {
                 res.setValue(nf.format(sensor.readTemperature()) + " ºc");
 
                 sendValuesToUrl(res);
+                
+                System.out.println("obtertemperatura: " + NF.format(sensor.readTemperature()));
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -284,6 +288,8 @@ public class acao extends HttpServlet {
             res.setValue(NF.format( press / 100 ) + " hPa");
 
             sendValuesToUrl(res);
+            
+            System.out.println("obterpressao: " + NF.format( press / 100 ) + " hPa");
         } catch (Exception ex) {
             Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -305,6 +311,8 @@ public class acao extends HttpServlet {
             res.setValue(NF.format(hum) + " %25");
             
             sendValuesToUrl(res);
+            
+            System.out.println("obterpressao: " + NF.format(hum) + " %");
 
         } catch (Exception ex) {
             Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
@@ -342,6 +350,8 @@ public class acao extends HttpServlet {
             res.setValue(count + "");
             
             sendValuesToUrl(res);
+            
+            System.out.println("obterldr: " + count );
         } catch (Exception ex) {
 
         }
