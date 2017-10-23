@@ -251,7 +251,6 @@ public class acao extends HttpServlet {
         else
         {
             try {
-                final NumberFormat nf = new DecimalFormat("##00.00");
                 bme280 sensor = new bme280();
 
                 Resultado res = new Resultado();
@@ -260,11 +259,11 @@ public class acao extends HttpServlet {
                 res.setDispositivo("");
                 res.setNomeEvento("obtertemperatura");
                 res.setUsuario("Agente");
-                res.setValue(nf.format(sensor.readTemperature()) + " ºc");
+                res.setValue(NF.format(sensor.readTemperature()) + " ºc");
 
                 sendValuesToUrl(res);
                 
-                System.out.println("obtertemperatura: " + NF.format(sensor.readTemperature()));
+                System.out.println("obtertemperatura: " + NF.format(sensor.readTemperature()) + " ºc");
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
