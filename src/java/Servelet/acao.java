@@ -382,7 +382,7 @@ public class acao extends HttpServlet {
             Properties props = getProp();
             
             String httpType = requisicao.getParameter("httptype");
-            String ip = requisicao.getParameter("ip");
+            String ip = requisicao.getRemoteAddr();
             String porta = requisicao.getParameter("porta");
             String servelet = requisicao.getParameter("servelet");
             String retorno = requisicao.getParameter("retorno");
