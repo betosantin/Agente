@@ -16,7 +16,6 @@ import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import com.pi4j.io.gpio.PinMode;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.RaspiPin;
-import com.pi4j.io.i2c.I2CFactory;
 import com.pi4j.io.w1.W1Master;
 import com.pi4j.temperature.TemperatureScale;
 import java.awt.Color;
@@ -31,12 +30,20 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.sql.Date;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -122,28 +129,34 @@ public class acao extends HttpServlet {
         if (request.getParameter("acenderled") != null )
         {
             acenderLed();
+            redirect(getUrlCentralizadora(false));
         }
         
         else if ( request.getParameter("apagarled") != null )
         {
             apagarLed();
+            redirect(getUrlCentralizadora(false));
         }
         
         else if ( request.getParameter("obtertemperatura") != null )
         {
             obtertemperatura();
+            redirect(getUrlCentralizadora(false));
         }
         else if ( request.getParameter("obterpressao") != null )
         {
             obterpressao();
+            redirect(getUrlCentralizadora(false));
         }
         else if ( request.getParameter("obterumidade") != null )
         {
             obterumidade();
+            redirect(getUrlCentralizadora(false));
         }
         else if ( request.getParameter("obterldr") != null )
         {
             obterldr();
+            redirect(getUrlCentralizadora(false));
         }
         
         else if ( request.getParameter("sincronizar") != null )
@@ -488,6 +501,11 @@ public class acao extends HttpServlet {
     
     public String getUrlCentralizadora()
     {
+        return getUrlCentralizadora(true);
+    }
+    
+    public String getUrlCentralizadora(boolean withReturn)
+    {
 
         String ret = "";
         
@@ -502,7 +520,13 @@ public class acao extends HttpServlet {
                 String retorno = props.getProperty("retorno", "");
                 String pass = props.getProperty("pass", "");
 
-                ret = schema + "://" + ip + ":" + port + "/" + servelet + "/" + retorno + "?pass=" + pass;
+                ret = schema + "://" + ip + ":" + port + "/" + servelet + "/";
+                
+                if ( withReturn )
+                {
+                    ret += retorno + "?pass=" + pass;
+                }
+                    
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -541,6 +565,60 @@ public class acao extends HttpServlet {
             ex.printStackTrace();
 
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void redirect( String pagina )
+    {
+        try
+        {
+            resposta.sendRedirect(pagina+"conHistorico.jsp");
+        }
+        
+        catch (Exception e)
+        {
+            System.out.println("erro ao encaminhar página");
+        }
+    }
+
+    
+    static {
+        SslVerification();
+    }
+
+    private static void SslVerification() {
+    try
+    {
+            // Create a trust manager that does not validate certificate chains
+        TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
+                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }
+            };
+
+            // Install the all-trusting trust manager
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+            // Create all-trusting host name verifier
+            HostnameVerifier allHostsValid = new HostnameVerifier() {
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            };
+
+            // Install the all-trusting host verifier
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
             e.printStackTrace();
         }
     }
