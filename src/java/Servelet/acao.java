@@ -9,41 +9,15 @@ import Entity.Parametros;
 import Entity.Metodos;
 import Entity.Resultado;
 import com.google.gson.Gson;
-import com.pi4j.component.temperature.TemperatureSensor;
-import com.pi4j.io.gpio.GpioController;
-import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import com.pi4j.io.gpio.PinMode;
-import com.pi4j.io.gpio.PinState;
-import com.pi4j.io.gpio.RaspiPin;
-import com.pi4j.io.w1.W1Master;
-import com.pi4j.temperature.TemperatureScale;
-import java.awt.Color;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,7 +25,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import teste.bme280;
 
 /**
  *
@@ -62,10 +35,6 @@ public class acao extends HttpServlet {
     HttpServletRequest requisicao;
     HttpServletResponse resposta;
 
-    LedSwitch ledThread;
-    
-    final NumberFormat NF = new DecimalFormat("##00.00");
-    
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -129,38 +98,44 @@ public class acao extends HttpServlet {
         if (request.getParameter("acenderled") != null )
         {
             acenderLed();
-            redirect(getUrlCentralizadora(false));
+            redirect(Functions.getUrlCentralizadora(false));
         }
         
         else if ( request.getParameter("apagarled") != null )
         {
             apagarLed();
-            redirect(getUrlCentralizadora(false));
+            redirect(Functions.getUrlCentralizadora(false));
         }
         
         else if ( request.getParameter("obtertemperatura") != null )
         {
             obtertemperatura();
-            redirect(getUrlCentralizadora(false));
+            redirect(Functions.getUrlCentralizadora(false));
         }
         else if ( request.getParameter("obterpressao") != null )
         {
             obterpressao();
-            redirect(getUrlCentralizadora(false));
+            redirect(Functions.getUrlCentralizadora(false));
         }
         else if ( request.getParameter("obterumidade") != null )
         {
             obterumidade();
-            redirect(getUrlCentralizadora(false));
+            redirect(Functions.getUrlCentralizadora(false));
         }
         else if ( request.getParameter("obterldr") != null )
         {
             obterldr();
-            redirect(getUrlCentralizadora(false));
+            redirect(Functions.getUrlCentralizadora(false));
         }
         else if ( request.getParameter("realizarMonitoramento") != null )
         {
-            redirect(getUrlCentralizadora(false));
+            realizarMonitoramento();
+            redirect(Functions.getUrlCentralizadora(false));
+        }
+        else if ( request.getParameter("pararMonitoramento") != null )
+        {
+            pararMonitoramento();
+            redirect(Functions.getUrlCentralizadora(false));
         }
         
         else if ( request.getParameter("sincronizar") != null )
@@ -218,167 +193,55 @@ public class acao extends HttpServlet {
         res.setUsuario("Agente");
         res.setValue("Cor: R:" + red + " G:" + green + " B:" + blue + " Piscar:" + blink + " Tempo(s):" + time );
 
-        sendValuesToUrl(res);
+        Functions f = new Functions();
         
-        ledThread = new LedSwitch(new Color(red, green, blue), time, blink);
-        ledThread.run();
+        f.sendValuesToUrl(res);
+        f.acenderLed(red, green, blue, blink, time);
     }
     
     private void apagarLed() {
-        
-        if ( ledThread != null )
-        {
-            ledThread.stop();
-            
-            Resultado res = new Resultado();
-            res.setData(Calendar.getInstance().getTimeInMillis());
-            res.setDirecao(Resultado.DIRECTION_RECEIVE);
-            res.setDispositivo("");
-            res.setNomeEvento("apagarled");
-            res.setUsuario("Agente");
-            res.setValue("Desligado");
-            
-            sendValuesToUrl(res);
-        }
+        Functions f = new Functions();
+        f.apagarLed();
     }
     
-    private void obtertemperatura() 
-    {
-        W1Master w1Master = new W1Master();
-
-        if ( !w1Master.getDevices(TemperatureSensor.class).isEmpty() )
-        {
-            for (TemperatureSensor device : w1Master.getDevices(TemperatureSensor.class)) {
-                if (device.getName().contains("28-0316a32b78ff")) {
-                        Resultado res = new Resultado();
-                        res.setData(Calendar.getInstance().getTimeInMillis());
-                        res.setDirecao(Resultado.DIRECTION_RECEIVE);
-                        res.setDispositivo("");
-                        res.setNomeEvento("obtertemperatura");
-                        res.setUsuario("Agente");
-                        res.setValue(device.getTemperature(TemperatureScale.CELSIUS) + " ºc");
-
-                        sendValuesToUrl(res);
-                        
-                        System.out.println("obtertemperatura: " + device.getTemperature(TemperatureScale.CELSIUS) + " ºc");
-                }
-            }
-        }
-        
-        else
-        {
-            try {
-                bme280 sensor = new bme280();
-
-                Resultado res = new Resultado();
-                res.setData(Calendar.getInstance().getTimeInMillis());
-                res.setDirecao(Resultado.DIRECTION_RECEIVE);
-                res.setDispositivo("");
-                res.setNomeEvento("obtertemperatura");
-                res.setUsuario("Agente");
-                res.setValue(NF.format(sensor.readTemperature()) + " ºc");
-
-                sendValuesToUrl(res);
-                
-                System.out.println("obtertemperatura: " + NF.format(sensor.readTemperature()) + " ºc");
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
+    private void obtertemperatura() {
+        Functions f = new Functions();
+        f.obtertemperatura();
     }
     
     private void obterpressao()
     {
-        try {
-            bme280 sensor = new bme280();
-            
-            sensor.readTemperature();
-            float press = sensor.readPressure();
-            
-            Resultado res = new Resultado();
-            res.setData(Calendar.getInstance().getTimeInMillis());
-            res.setDirecao(Resultado.DIRECTION_RECEIVE);
-            res.setDispositivo("");
-            res.setNomeEvento("obterpressao");
-            res.setUsuario("Agente");
-            res.setValue(NF.format( press / 100 ) + " hPa");
-
-            sendValuesToUrl(res);
-            
-            System.out.println("obterpressao: " + NF.format( press / 100 ) + " hPa");
-        } catch (Exception ex) {
-            Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Functions f = new Functions();
+        f.obterpressao();
     }
     
     private void obterumidade()
     {
-        try {
-            bme280 sensor = new bme280();
-            
-            float hum = sensor.readHumidity();
-            
-            Resultado res = new Resultado();
-            res.setData(Calendar.getInstance().getTimeInMillis());
-            res.setDirecao(Resultado.DIRECTION_RECEIVE);
-            res.setDispositivo("");
-            res.setNomeEvento("obterumidade");
-            res.setUsuario("Agente");
-            res.setValue(NF.format(hum) + " %25");
-            
-            sendValuesToUrl(res);
-            
-            System.out.println("obterpressao: " + NF.format(hum) + " %");
-
-        } catch (Exception ex) {
-            Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Functions f = new Functions();
+        f.obterumidade();
     }
     
-    private void obterldr()
-    {
-        try {
-            int count = 0;
-
-            GpioController gpio = GpioFactory.getInstance();
-
-            final GpioPinDigitalOutput pinOut = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_21, PinState.LOW);
-
-            pinOut.setShutdownOptions(true, PinState.HIGH);
-
-            Thread.sleep(1);
-
-            pinOut.setMode(PinMode.DIGITAL_INPUT);
-
-            while (pinOut.isLow()) {
-                count += 1;
-            }
-
-            gpio.shutdown();
-            gpio.unprovisionPin(pinOut);
-
-            Resultado res = new Resultado();
-            res.setData(Calendar.getInstance().getTimeInMillis());
-            res.setDirecao(Resultado.DIRECTION_RECEIVE);
-            res.setDispositivo("");
-            res.setNomeEvento("obterldr");
-            res.setUsuario("Agente");
-            res.setValue(count + "");
-            
-            sendValuesToUrl(res);
-            
-            System.out.println("obterldr: " + count );
-        } catch (Exception ex) {
-
-        }
+    private void obterldr() {
+        Functions f = new Functions();
+        f.obterldr();
+    }
+    
+    private void realizarMonitoramento() {
+        Functions f = new Functions();
+        f.realizarMonitoramento();
+    }
+    
+    private void pararMonitoramento() {
+        Functions f = new Functions();
+        f.pararMonitoramento();
     }
 
     public void getStatus() {
         resposta.setContentType("application/json");
-        
+
         try {
             resposta.getWriter().write("Online");
-            
+
         } catch (IOException ex) {
             Logger.getLogger(acao.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -396,7 +259,7 @@ public class acao extends HttpServlet {
         try {
             createProp();
             
-            Properties props = getProp();
+            Properties props = Functions.getProp();
             
             String httpType = requisicao.getParameter("httptype");
             String ip = requisicao.getRemoteAddr();
@@ -446,7 +309,8 @@ public class acao extends HttpServlet {
         Metodos obtPress = new Metodos( "obterpressao", Parametros.FLOAT, null );
         Metodos obtHumi = new Metodos( "obterumidade", Parametros.FLOAT, null );
         Metodos obtLuminosidade = new Metodos( "obterldr", Parametros.INT, null );
-        Metodos monitoramento = new Metodos( "realizarMonitoramento", Parametros.BOOLEAN, null );
+        Metodos startmonitoramento = new Metodos( "realizarMonitoramento", Parametros.BOOLEAN, null );
+        Metodos stopmonitoramento = new Metodos( "pararMonitoramento", Parametros.BOOLEAN, null );
         
         List<Metodos> metodos = new ArrayList<>();
         metodos.add(luzOn);
@@ -455,7 +319,8 @@ public class acao extends HttpServlet {
         metodos.add(obtPress);
         metodos.add(obtHumi);
         metodos.add(obtLuminosidade);
-        metodos.add(monitoramento);
+        metodos.add(startmonitoramento);
+        metodos.add(stopmonitoramento);
         
         Gson g = new Gson();
         
@@ -493,88 +358,6 @@ public class acao extends HttpServlet {
         fos.close();
     }
     
-    private Properties getProp() throws IOException {
-        Properties props = new Properties();
-        File f = new File(System.getProperty("user.dir") + "/dados.properties");
-      
-        if (f.exists()) {
-            FileInputStream file = new FileInputStream(f);
-            props.load(file);
-        }
-        
-        return props;
-    } 
-    
-    public String getUrlCentralizadora()
-    {
-        return getUrlCentralizadora(true);
-    }
-    
-    public String getUrlCentralizadora(boolean withReturn)
-    {
-
-        String ret = "";
-        
-        try {
-            Properties props = getProp();
-
-            if (props != null) {
-                String schema = props.getProperty("httptype", "");
-                String ip = props.getProperty("ip", "");
-                String port = props.getProperty("porta", "");
-                String servelet = props.getProperty("servelet", "");
-                String retorno = props.getProperty("retorno", "");
-                String pass = props.getProperty("pass", "");
-
-                ret = schema + "://" + ip + ":" + port + "/" + servelet + "/";
-                
-                if ( withReturn )
-                {
-                    ret += retorno + "?pass=" + pass;
-                }
-                    
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return ret;
-    }
-    
-    private void sendValuesToUrl(Resultado res)
-    {
-        try {
-            URL url = new URL(getUrlCentralizadora());
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setReadTimeout(10000);
-            conn.setDoOutput(true);
-            conn.setDoInput(true);
-//            conn.setRequestProperty("Content-Type","application/json"); 
-            OutputStreamWriter out = new OutputStreamWriter(
-                    conn.getOutputStream(), "UTF-8");
-            out.write("resultado=" + new Gson().toJson(res));
-            out.flush();
-            out.close();
-            
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(
-                            conn.getInputStream()));
-            String decodedString;
-            while ((decodedString = in.readLine()) != null) {
-                System.out.println(decodedString);
-            }
-            in.close();
-            conn.disconnect(); 
-            
-        } catch (IOException ex) {
-            System.out.println("TIME OUT......");
-            ex.printStackTrace();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
     private void redirect( String pagina )
     {
         try
@@ -585,47 +368,6 @@ public class acao extends HttpServlet {
         catch (Exception e)
         {
             System.out.println("erro ao encaminhar página");
-        }
-    }
-
-    
-    static {
-        SslVerification();
-    }
-
-    private static void SslVerification() {
-    try
-    {
-            // Create a trust manager that does not validate certificate chains
-        TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
-                public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                }
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                }
-            }
-            };
-
-            // Install the all-trusting trust manager
-            SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-
-            // Create all-trusting host name verifier
-            HostnameVerifier allHostsValid = new HostnameVerifier() {
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            };
-
-            // Install the all-trusting host verifier
-            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyManagementException e) {
-            e.printStackTrace();
         }
     }
 }
