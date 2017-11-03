@@ -185,17 +185,8 @@ public class acao extends HttpServlet {
             blink = Boolean.valueOf(requisicao.getParameter("blink"));
         }
         
-        Resultado res = new Resultado();
-        res.setData(Calendar.getInstance().getTimeInMillis());
-        res.setDirecao(Resultado.DIRECTION_RECEIVE);
-        res.setDispositivo("");
-        res.setNomeEvento("acenderled");
-        res.setUsuario("Agente");
-        res.setValue("Cor: R:" + red + " G:" + green + " B:" + blue + " Piscar:" + blink + " Tempo(s):" + time );
-
         Functions f = new Functions();
         
-        f.sendValuesToUrl(res);
         f.acenderLed(red, green, blue, blink, time);
     }
     
