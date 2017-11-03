@@ -158,6 +158,10 @@ public class acao extends HttpServlet {
             obterldr();
             redirect(getUrlCentralizadora(false));
         }
+        else if ( request.getParameter("realizarMonitoramento") != null )
+        {
+            redirect(getUrlCentralizadora(false));
+        }
         
         else if ( request.getParameter("sincronizar") != null )
         {
@@ -442,6 +446,7 @@ public class acao extends HttpServlet {
         Metodos obtPress = new Metodos( "obterpressao", Parametros.FLOAT, null );
         Metodos obtHumi = new Metodos( "obterumidade", Parametros.FLOAT, null );
         Metodos obtLuminosidade = new Metodos( "obterldr", Parametros.INT, null );
+        Metodos monitoramento = new Metodos( "realizarMonitoramento", Parametros.BOOLEAN, null );
         
         List<Metodos> metodos = new ArrayList<>();
         metodos.add(luzOn);
@@ -450,6 +455,7 @@ public class acao extends HttpServlet {
         metodos.add(obtPress);
         metodos.add(obtHumi);
         metodos.add(obtLuminosidade);
+        metodos.add(monitoramento);
         
         Gson g = new Gson();
         
