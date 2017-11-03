@@ -49,6 +49,7 @@ import teste.bme280;
 public class Functions {
     
     LedSwitch ledThread;
+    TemperatureTrigger tempThread;
     
     final NumberFormat NF = new DecimalFormat("##00.00");
     
@@ -218,9 +219,24 @@ public class Functions {
     }
     
     public void realizarMonitoramento() {
+        tempThread = new TemperatureTrigger(0);
+        tempThread.run();
     }
     
     public void pararMonitoramento() {
+        if (tempThread != null) {
+            tempThread.stop();
+
+            Resultado res = new Resultado();
+            res.setData(Calendar.getInstance().getTimeInMillis());
+            res.setDirecao(Resultado.DIRECTION_RECEIVE);
+            res.setDispositivo("");
+            res.setNomeEvento("pararMonitoramento");
+            res.setUsuario("Agente");
+            res.setValue("Desligado");
+
+            sendValuesToUrl(res);
+        }
     }
     
     public String getUrlCentralizadora()
