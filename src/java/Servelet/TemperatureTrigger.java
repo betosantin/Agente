@@ -5,6 +5,8 @@
  */
 package Servelet;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import teste.bme280;
 
 /**
@@ -56,22 +58,21 @@ public class TemperatureTrigger implements Runnable {
                     //vermelho
                 }
                 
-                Thread.sleep(10000); 
+                Thread.sleep(60000); 
             }
 
-            stop();
+            finalize();
         } catch (Exception e) {
             e.printStackTrace();
+        } catch (Throwable ex) {
+            Logger.getLogger(TemperatureTrigger.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    public void stop()
-    {
+
+    @Override
+    protected void finalize() throws Throwable {
         stop = true;
         
-        try {
-            this.finalize();
-        } catch (Throwable ex) {
-        }
+        super.finalize();
     }
 }

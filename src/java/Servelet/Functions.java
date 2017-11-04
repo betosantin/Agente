@@ -225,7 +225,11 @@ public class Functions {
     
     public void pararMonitoramento() {
         if (tempThread != null) {
-            tempThread.stop();
+            try {
+                tempThread.finalize();
+            } catch (Throwable ex) {
+                Logger.getLogger(Functions.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
             Resultado res = new Resultado();
             res.setData(Calendar.getInstance().getTimeInMillis());
